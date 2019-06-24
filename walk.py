@@ -1,6 +1,8 @@
 import pygame
 from pygame.locals import *
+from levels import levels
 import sys
+import os
 
 
 pygame.init()
@@ -21,181 +23,195 @@ WINDOW_WIDTH = 600
 WINDOW_HEIGHT = 400
 
 
-LEVEL_1 = pygame.image.load("LEVEL_1.png")
-HERO_IMG = pygame.image.load('hero.png')
-COIN_IMG = pygame.image.load('coin.png')
-LAKE_IMG = pygame.image.load('lake.png')
+HERO_IMG = pygame.image.load(os.path.join('img', 'hero.png'))
+COIN_IMG = pygame.image.load(os.path.join('img', 'coin.png'))
+LAKE_IMG = pygame.image.load(os.path.join('img', 'lake.png'))
+FINISH_IMG = pygame.image.load(os.path.join('img', 'finish.png'))
 
+screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), 0, 32)
+screen.fill((0,0,0))
 
 COINS = []
 LAKES = []
 
 COUNT = 0
 
-LEGEND_1 = [
-		[1]*10,#1
-		[1,4]*2 + [0]*4 + [5,1],#2
-		[1,0]*2 + [1]*4 + [0,1],#3
-		[1,0]*2 + [1,4] + [0,1]*2,#4
-		[1,0]*2 + [1,1] + [0,1]*2,#5
-		[1,0]*2 + [0,1] + [0]*3 + [1],#6
-		[1,0,1,1,0] + [1]*3 + [0,1],#7
-		[1] + [0]*4 + [2] + [0]*3 + [1],#8
-		[1,1,0] + [1]*7,#9
-		[1,1,0,1] + [0]*5 + [1],#10
-		[1,1,0,0,0,1,0,1,0,1],#11
-		[1]*6 + [0,1]*2,#12
-		[1] + [0]*3 + [1] + [0,0] + [1,0,1],#13
-		[1,3,1,4,0,0,1,1,4,1],#14
-		[1]*10#15
-	]
-
-### Set hero's coordinates ###
-for i in range(15):
-	if 5 in LEGEND_1[i]:
-		XCOR = i * 40
-
-		for j in range(10):
-			if LEGEND_1[i][j] == 5:
-				YCOR = j *40
-
-### Fill in the lists of coordinates of coins and lakes ###
-for i in range(15):
-	if 2 in LEGEND_1[i] or 4 in LEGEND_1[i]:
-		for j in range(10):
-			if LEGEND_1[i][j] == 2:
-				LAKES.append([i*40, j*40])
-
-			if LEGEND_1[i][j] == 4:
-				COINS.append([i*40, j*40])
-				COUNT += 1
-
-			if LEGEND_1[i][j] == 3:
-				FINX = i * 40
-				FINY = j * 40
-
-### Creating the main screen ###
-
-screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), 0, 32)
-
-screen.blit(LEVEL_1, [0,0])
-
-### Functions ###
-
-
-def stack():
-	for lake in LAKES:
-		screen.blit(LAKE_IMG, lake)
-
-	for coin in COINS:
-		screen.blit(COIN_IMG, coin)
-
-
-def do_move():
-	global XCOR, YCOR, turn
-
-	col, row = int(XCOR/40), int(YCOR/40)
-	can = False
-	ok = [0, 2, 3, 4]
-	dx, dy = 0, 0
-
-	if turn == 'u' and LEGEND_1[col][row-1] in ok:
-		can = True
-		dy -= 1
-
-	elif turn == 'r' and LEGEND_1[col+1][row] in ok:
-		can = True
-		dx += 1
-
-	elif turn == 'd' and LEGEND_1[col][row+1] in ok:
-		can = True
-		dy += 1
-
-	elif turn == 'l' and LEGEND_1[col-1][row] in ok:
-		can = True
-		dx -= 1
-
-	if can == True:
-
-		LEGEND_1[col][row] = 0
-
-		XCOR = XCOR + dx*40
-		YCOR = YCOR + dy*40
-
-	LEGEND_1[int(XCOR/40)][int(YCOR/40)] = 5
-
-	turn = None
-
-
-def clean_lists():
-	global XCOR, YCOR
-
-	if [XCOR, YCOR] in LAKES:
-		LAKES.remove([XCOR, YCOR])
-
-	if [XCOR, YCOR] in COINS:
-		COINS.remove([XCOR, YCOR])
-
-
-def score():
-	screen.blit(font.render(str(COUNT-len(COINS)) + '/' + str(COUNT), False, (0,0,0)), (528,15)) 
+level_num = 1
 
 
 
 
-while True:
+class Level():
 
-	if XCOR == FINX and YCOR == FINY:
-		break
+	def __init__(self, num, COINS = [], LAKES = [], COUNT = 0):
+		self.num = num
+		self.legend = levels[num]
+		self.COINS = COINS
+		self.LAKES = LAKES
+		self.COUNT = COUNT
+		self.level_img = pygame.image.load(os.path.join('img', 'LEVEL_%s.png' %num))
+		self.XCOR = None
+		self.YCOR = None
+		self.FINX = None
+		self.FINY = None
 
-	screen.blit(LEVEL_1, [0,0])
 
-	stack()
+	def cors(self):
+		legend = self.legend
 
-	clean_lists()
+		for i in range(15):
+			for j in range(10):
+				if legend[i][j] == 5:
+					self.XCOR = i * 40
+					self.YCOR = j *40
+				if legend[i][j] == 3:
+					self.FINX = i * 40
+					self.FINY = j * 40
 
-	screen.blit(HERO_IMG, [XCOR, YCOR])
 
-	score()
-	
-	for event in pygame.event.get():
+	def fill_lists(self):
+		legend = self.legend
+
+		for i in range(15):
+			if 2 in legend[i] or 4 in legend[i]:
+				for j in range(10):
+					if legend[i][j] == 2:
+						self.LAKES.append([i*40, j*40])
+
+					if legend[i][j] == 4:
+						self.COINS.append([i*40, j*40])
+						self.COUNT += 1
+
+
+	def stack(self):
+		global LAKE_IMG, COIN_IMG
+
+		for lake in self.LAKES:
+			screen.blit(LAKE_IMG, lake)
+
+		for coin in self.COINS:
+			screen.blit(COIN_IMG, coin)
+
+		screen.blit(FINISH_IMG, [self.FINX, self.FINY])
+
+
+	def clean_lists(self):
+		XCOR, YCOR = self.XCOR, self.YCOR
+
+		if [XCOR, YCOR] in self.LAKES:
+			self.LAKES.remove([XCOR, YCOR])
+
+		if [XCOR, YCOR] in self.COINS:
+			self.COINS.remove([XCOR, YCOR])
+
+	def score(self):
+		screen.blit(font.render(str(self.COUNT-len(self.COINS)) + '/' + str(self.COUNT), False, (0,0,0)), (528,15))
+
+
+	def do_move(self):
+		global turn
+
+		legend = self.legend
+
+		col, row = int(self.XCOR/40), int(self.YCOR/40)
+		can = False
+		ok = [0, 2, 3, 4]
+		dx, dy = 0, 0
+
+		if turn == 'u' and legend[col][row-1] in ok:
+			can = True
+			dy -= 1
+
+		elif turn == 'r' and legend[col+1][row] in ok:
+			can = True
+			dx += 1
+
+		elif turn == 'd' and legend[col][row+1] in ok:
+			can = True
+			dy += 1
+
+		elif turn == 'l' and legend[col-1][row] in ok:
+			can = True
+			dx -= 1
+
+		if can == True:
+
+			legend[col][row] = 0
+
+			self.XCOR += dx*40
+			self.YCOR += dy*40
+
+		legend[int(self.XCOR/40)][int(self.YCOR/40)] = 5
+
+		turn = None
+
+
+
+
+### main ###
+
+
+def main():
+
+	global level_num, screen, turn
+
+	while True:
+
+		level = Level(level_num)
+
+		level.cors()
+
+		level.fill_lists()
+
+		while True:
+			if level.XCOR == level.FINX and level.YCOR == level.FINY:
+				level.COINS.clear()
+				level.LAKES.clear()
+				break
+
+
+			screen.blit(level.level_img, [0,0])
+
+			level.stack()
+
+			level.clean_lists()
+
+			screen.blit(HERO_IMG, [level.XCOR, level.YCOR])
+
+			level.score()
+
+
+			for event in pygame.event.get():
 		
-		if event.type == QUIT:
-			pygame.quit()
-			sys.exit()
+				if event.type == QUIT:
+					pygame.quit()
+					sys.exit()
 
-		if event.type == KEYDOWN:
-			k = event.key
+				if event.type == KEYDOWN:
+					k = event.key
 
-			if k == 273:
-				turn = 'u'
+					if k == 273:
+						turn = 'u'
 
-			elif k == 274:
-				turn = 'd'
+					elif k == 274:
+						turn = 'd'
 
-			elif k == 275:
-				turn = 'r'
+					elif k == 275:
+						turn = 'r'
 
-			elif k == 276:
-				turn = 'l'
+					elif k == 276:
+						turn = 'l'
 
+			level.do_move()
 
-	do_move()
-
-
-	pygame.display.update()
+			pygame.display.update()
 
 
-while True:
-	
-	pygame.draw.rect(screen, (255, 255, 255), (200, 120, 200, 160))
+		level_num += 1
 
-	screen.blit(font1.render('Level 1 have gone', False, (0,0,0)), (260, 180))
 
-	for event in pygame.event.get():
-		
-		if event.type == QUIT:
-			pygame.quit()
-			sys.exit()
 
-	pygame.display.update()
+if __name__ == '__main__':
+	main()
+
+
