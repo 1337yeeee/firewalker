@@ -3,6 +3,7 @@ from pygame.locals import *
 from levels import levels
 import sys
 import os
+import time
 
 
 pygame.init()
@@ -143,9 +144,39 @@ class Level():
 
 		legend[int(self.XCOR/40)][int(self.YCOR/40)] = 5
 
-		turn = None
+		time.sleep(0.1)
 
 
+
+
+### menu ###
+
+
+def menu():
+
+	play = False
+
+	while True:
+		screen.blit(pygame.image.load(os.path.join('img', 'menu.png')), [0,0])
+
+		for event in pygame.event.get():
+
+			if event.type == QUIT:
+				pygame.quit()
+				sys.exit()
+
+			if event.type == 6:
+				if 225 <= event.pos[0] <= 375 and 245 <= event.pos[1] <= 283:
+					pygame.quit()
+					sys.exit()
+
+				elif 225 <= event.pos[0] <= 375 and 165 <= event.pos[1] <= 203:
+					play = True
+
+		if play == True:
+			break
+
+		pygame.display.update()
 
 
 ### main ###
@@ -162,6 +193,8 @@ def main():
 		level.cors()
 
 		level.fill_lists()
+
+		KDOWN = False
 
 		while True:
 			if level.XCOR == level.FINX and level.YCOR == level.FINY:
@@ -188,6 +221,7 @@ def main():
 					sys.exit()
 
 				if event.type == KEYDOWN:
+					KDOWN = True
 					k = event.key
 
 					if k == 273:
@@ -202,7 +236,15 @@ def main():
 					elif k == 276:
 						turn = 'l'
 
-			level.do_move()
+				if event.type == KEYUP:
+					KDOWN = False
+
+
+			if KDOWN == True:
+				level.do_move()
+			elif KDOWN == False:
+				turn = None
+
 
 			pygame.display.update()
 
@@ -212,6 +254,8 @@ def main():
 
 
 if __name__ == '__main__':
-	main()
 
+	menu()
+
+	main()
 
