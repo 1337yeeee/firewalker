@@ -154,8 +154,6 @@ class Level():
 
 def menu():
 
-	play = False
-
 	while True:
 		screen.blit(pygame.image.load(os.path.join('img', 'menu.png')), [0,0])
 
@@ -166,25 +164,53 @@ def menu():
 				sys.exit()
 
 			if event.type == 6:
-				if 225 <= event.pos[0] <= 375 and 245 <= event.pos[1] <= 283:
+				if 225 <= event.pos[0] <= 375 and 280 <= event.pos[1] <= 318:
 					pygame.quit()
 					sys.exit()
 
-				elif 225 <= event.pos[0] <= 375 and 165 <= event.pos[1] <= 203:
-					play = True
+				elif 225 <= event.pos[0] <= 375 and 135 <= event.pos[1] <= 173:
+					return 'play'
 
-		if play == True:
-			break
+				elif 225 <= event.pos[0] <= 375 and 207 <= event.pos[1] <= 245:
+					return 'levels'
+
 
 		pygame.display.update()
 
 
-### main ###
+### pick level ###
 
 
-def main():
+def what_level():
 
-	global level_num, screen, turn
+	while True:
+		screen.blit(pygame.image.load(os.path.join('img', 'what_level.png')), [0,0])
+
+		for event in pygame.event.get():
+
+			if event.type == QUIT:
+				pygame.quit()
+				sys.exit()
+
+			if event.type == 6:
+				if 0 <= event.pos[0] <= 50 and 0 <= event.pos[1] <= 30:
+					main()
+
+				if 193 <= event.pos[0] <= 253 and 161 <= event.pos[1] <= 222:
+					return 1
+
+				if 376 <= event.pos[0] <= 436 and 161 <= event.pos[1] <= 222:
+					return 2					
+
+		pygame.display.update()
+
+
+### game ###
+
+
+def game(level_num):
+
+	global screen, turn
 
 	while True:
 
@@ -220,6 +246,14 @@ def main():
 					pygame.quit()
 					sys.exit()
 
+				if event.type == 6:
+					if 0 <= event.pos[0] <= 50 and 0 <= event.pos[1] <= 30:
+
+						level.COINS.clear()
+						level.LAKES.clear()
+
+						main()
+
 				if event.type == KEYDOWN:
 					KDOWN = True
 					k = event.key
@@ -252,10 +286,26 @@ def main():
 		level_num += 1
 
 
+### main ###
+
+
+def main():
+	what = menu()
+
+	if what == 'play':
+		try: 
+			game(level_num)
+		except:
+			game(1)
+
+	elif what == 'levels':
+		game(what_level())
+
+	
+
+
 
 if __name__ == '__main__':
 
-	menu()
-
 	main()
-
+	
